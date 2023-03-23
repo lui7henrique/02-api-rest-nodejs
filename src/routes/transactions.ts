@@ -21,25 +21,31 @@ export async function transactionsRoutes(app: FastifyInstance) {
       return { transactions }
     },
   )
-  app.get('/:id', async (request) => {
-    const getTransactionsParamsSchema = z.object({
-      id: z.string().uuid(),
-    })
-
-    const { id } = getTransactionsParamsSchema.parse(request.params)
-    const { sessionId } = request.cookies
-
-    const transaction = await knex('transactions')
-      .where({
-        id,
-        session_id: sessionId,
+  app.get(
+    '/:id',
+    {
+      preHandler: [checkSessionIdExists],
+    },
+    async (request) => {
+      const getTransactionsParamsSchema = z.object({
+        id: z.string().uuid(),
       })
-      .first()
 
-    return {
-      transaction,
-    }
-  })
+      const { id } = getTransactionsParamsSchema.parse(request.params)
+      const { sessionId } = request.cookies
+
+      const transaction = await knex('transactions')
+        .where({
+          id,
+          session_id: sessionId,
+        })
+        .first()
+
+      return {
+        transaction,
+      }
+    },
+  )
 
   app.get(
     '/summary',
